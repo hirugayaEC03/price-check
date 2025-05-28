@@ -1,5 +1,5 @@
 # app.py
-# Streamlit Cloud で動作・共有できる税込金額X計算アプリ（Enterキー＆安全なセッション制御版）
+# Streamlit Cloud で動作・共有できる税込金額X計算アプリ（Enterキー対応＆セッションステート同期修正版）
 import streamlit as st
 import re
 
@@ -39,23 +39,21 @@ def on_submit():
         st.session_state.result = None
 
 # フォーム: Enterキーで計算を実行
-with st.form(key="calc_form", clear_on_submit=False):
+with st.form(key="calc_form"):
     st.text_input(
         label="入力値 V（目標価格 円）", 
         key='V_text', 
-        value=st.session_state.V_text,
         placeholder="例: 11,810"
     )
     st.number_input(
         label="税抜金額にかける割合 (%)", 
         min_value=0.0, max_value=100.0,
         format="%.2f", 
-        key='pct',
-        value=st.session_state.pct
+        key='pct'
     )
     st.form_submit_button("計算する", on_click=on_submit)
 
-# エラーメッセージ
+# エラーメッセージ表示
 if st.session_state.error_msg:
     st.error(st.session_state.error_msg)
 
