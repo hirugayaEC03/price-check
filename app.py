@@ -1,5 +1,5 @@
 # app.py
-# Streamlit Cloud で動作・共有できる税込金額X計算アプリ（Enterキー対応＆セッションステート同期修正版）
+# Streamlit Cloud で動作・共有できる税込金額X計算アプリ（入力履歴を残さない設定付き）
 import streamlit as st
 import re
 
@@ -15,10 +15,13 @@ for key, default in [('V_text', ''), ('pct', 1.5), ('result', None), ('error_msg
     if key not in st.session_state:
         st.session_state[key] = default
 
-# 計算処理（コールバック）
+# 計算処理コールバック
 def on_submit():
+    # エラーメッセージと結果を初期化
     st.session_state.error_msg = None
+    st.session_state.result = None
     raw = st.session_state.V_text or ''
+    # カンマ・スペースを除去し、数字とピリオドのみを抽出
     cleaned = re.sub(r"[^0-9.]", "", raw)
     try:
         V = float(cleaned)
@@ -26,24 +29,25 @@ def on_submit():
         k = ratio / 1.1
         X = V / (1 - k)
         st.session_state.result = (V, X)
-        st.session_state.V_text = ''  # 入力欄クリア
+        # 入力欄クリア
+        st.session_state.V_text = ''
     except ValueError:
         st.session_state.error_msg = (
             "有効な数値を入力してください（カンマ区切りやスペースは自動削除）。"
         )
-        st.session_state.result = None
     except ZeroDivisionError:
         st.session_state.error_msg = (
             "設定された割合が不正です。1 - (pct/100/1.1) が 0 になります。"
         )
-        st.session_state.result = None
 
 # フォーム: Enterキーで計算を実行
 with st.form(key="calc_form"):
     st.text_input(
         label="入力値 V（目標価格 円）", 
         key='V_text', 
-        placeholder="例: 11,810"
+        placeholder="例: 11,810",
+        value=st.session_state.V_text,
+        autocomplete="off"
     )
     st.number_input(
         label="税抜金額にかける割合 (%)", 
@@ -63,4 +67,5 @@ if st.session_state.result:
     st.success(f"目標価格: {V_val:,.2f} 円 → 税込金額 X: {X_val:,.2f} 円")
 
 # デプロイ手順:
-# GitHub リポジトリに app.py と requirements.txt を配置し、share.streamlit.io で指定してデプロイ
+# 1. GitHub リポジトリに app.py と requirements.txt を配置
+# 2. share.streamlit.io でリポジトリを指定してデプロイ
